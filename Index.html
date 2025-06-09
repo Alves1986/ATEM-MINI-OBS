@@ -1,0 +1,285 @@
+<!DOCTYPE html><html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel ATEM Mini Pro OBS</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      background-color: #222;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #fff;
+      margin: 10px 0 0;
+      font-size: 40px;
+      font-weight: bold;
+    }
+    h2 {
+      color: #aaa;
+      margin: 0 0 20px;
+      font-size: 18px;
+    }
+    .main-container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .connection-panel {
+      background-color: #111;
+      padding: 15px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 250px;
+    }
+    .connection-panel input, .connection-panel button, select {
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+    }
+    .connection-panel button {
+      background-color: #27ae60;
+      color: white;
+      cursor: pointer;
+    }
+    .panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      background-color: #111;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+    }
+    .button {
+      height: 60px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #fff;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      transition: transform 0.2s;
+      border: none;
+    }
+    .button:active {
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
+    .scene { background-color: #2980b9; }
+    .transition { background-color: #8e44ad; }
+    .audio { background-color: #e67e22; }
+    .media { background-color: #c0392b; }
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal {
+      background: #333;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #saveConfigBtn, #loadConfigBtn {
+      margin: 10px;
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .page-nav {
+      display: flex;
+      gap: 10px;
+      margin: 10px;
+    }
+    .page-nav button {
+      padding: 5px 10px;
+      background: #555;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>ATEM MINI OBS</h1>
+  <h2>by Anderson Alves</h2>  <div class="main-container">
+    <div class="connection-panel">
+      <input type="text" id="host" placeholder="Host (ex: localhost)">
+      <input type="text" id="port" placeholder="Porta (ex: 4455)">
+      <input type="password" id="password" placeholder="Senha do WebSocket">
+      <button onclick="connectOBS()">Conectar</button>
+      <div id="connectionStatus" style="color: #fff;"></div>
+      <input type="file" accept="application/JSON" onchange="loadFromJSON(event)">
+      <button id="loadConfigBtn">Carregar Perfil</button>
+    </div><div class="panel" id="panel"></div>
+
+  </div>  <div class="page-nav">
+    <button onclick="prevPage()">Anterior</button>
+    <button onclick="nextPage()">Próxima</button>
+  </div><button id="saveConfigBtn" onclick="saveToJSON()">Salvar Configuração</button>
+
+  <div class="overlay" id="configOverlay">
+    <div class="modal">
+      <label for="buttonLabel">Nome:</label>
+      <input type="text" id="buttonLabel">
+      <label for="buttonAction">Ação:</label>
+      <select id="buttonAction">
+        <option value="scene">Cena</option>
+        <option value="transition">Transição</option>
+        <option value="audio">Áudio</option>
+        <option value="media">Mídia</option>
+      </select>
+      <button onclick="saveConfig()">Salvar</button>
+    </div>
+  </div>  <script>
+    let obsSocket = null;
+    let buttonConfigs = {};
+    let currentButton = null;
+    let currentPage = 0;
+    const buttonsPerPage = 12;
+    const panel = document.getElementById('panel');
+
+    function connectOBS() {
+      const host = document.getElementById('host').value || 'localhost';
+      const port = document.getElementById('port').value || '4455';
+      const password = document.getElementById('password').value || '';
+      const wsUrl = `ws://${host}:${port}`;
+
+      obsSocket = new WebSocket(wsUrl);
+      obsSocket.onopen = () => {
+        document.getElementById('connectionStatus').textContent = 'Conectado!';
+      };
+      obsSocket.onerror = () => {
+        document.getElementById('connectionStatus').textContent = 'Erro na conexão';
+      };
+      obsSocket.onclose = () => {
+        document.getElementById('connectionStatus').textContent = 'Desconectado';
+      };
+    }
+
+    function renderButtons() {
+      panel.innerHTML = '';
+      const keys = Object.keys(buttonConfigs).slice(currentPage * buttonsPerPage, (currentPage + 1) * buttonsPerPage);
+      keys.forEach(key => {
+        const config = buttonConfigs[key];
+        const btn = document.createElement('button');
+        btn.className = `button ${config.action}`;
+        btn.innerHTML = `<i class="fa ${getIcon(config.action)}"></i><span>${key}</span>`;
+        btn.onclick = () => handleAction(key, config);
+        btn.oncontextmenu = (e) => {
+          e.preventDefault();
+          currentButton = key;
+          openConfig(key);
+        };
+        panel.appendChild(btn);
+      });
+    }
+
+    function getIcon(action) {
+      return {
+        scene: 'fa-tv',
+        transition: 'fa-arrows-turn-to-dots',
+        audio: 'fa-volume-high',
+        media: 'fa-photo-film'
+      }[action] || 'fa-circle';
+    }
+
+    function handleAction(label, config) {
+      if (!config || !config.action || obsSocket.readyState !== 1) return;
+      const msg = {
+        op: 6,
+        d: {
+          requestType: '',
+          requestId: Date.now().toString(),
+          requestData: {}
+        }
+      };
+      if (config.action === 'scene') {
+        msg.d.requestType = 'SetCurrentProgramScene';
+        msg.d.requestData.sceneName = label;
+      } else if (config.action === 'transition') {
+        msg.d.requestType = 'TriggerTransition';
+      } else if (config.action === 'audio') {
+        msg.d.requestType = 'ToggleInputMute';
+        msg.d.requestData.inputName = label;
+      } else if (config.action === 'media') {
+        msg.d.requestType = 'PlayPauseMedia';
+        msg.d.requestData.inputName = label;
+      }
+      obsSocket.send(JSON.stringify(msg));
+    }
+
+    function openConfig(label) {
+      document.getElementById('buttonLabel').value = label;
+      document.getElementById('buttonAction').value = buttonConfigs[label].action;
+      document.getElementById('configOverlay').style.display = 'flex';
+    }
+
+    function saveConfig() {
+      const label = document.getElementById('buttonLabel').value;
+      const action = document.getElementById('buttonAction').value;
+      buttonConfigs[label] = { action };
+      document.getElementById('configOverlay').style.display = 'none';
+      renderButtons();
+    }
+
+    function saveToJSON() {
+      const blob = new Blob([JSON.stringify(buttonConfigs, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'config.json';
+      a.click();
+    }
+
+    function loadFromJSON(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        buttonConfigs = JSON.parse(reader.result);
+        renderButtons();
+      };
+      reader.readAsText(file);
+    }
+
+    function prevPage() {
+      if (currentPage > 0) {
+        currentPage--;
+        renderButtons();
+      }
+    }
+
+    function nextPage() {
+      const maxPage = Math.floor(Object.keys(buttonConfigs).length / buttonsPerPage);
+      if (currentPage < maxPage) {
+        currentPage++;
+        renderButtons();
+      }
+    }
+  </script></body>
+</html>
