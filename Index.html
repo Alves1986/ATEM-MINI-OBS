@@ -1,285 +1,411 @@
-<!DOCTYPE html><html lang="pt-br">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel ATEM Mini Pro OBS</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel ATEM Mini Pro - OBS</title>
   <style>
+    /* seu CSS original (igual) */
     body {
-      background-color: #222;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100vh;
       margin: 0;
-    }
-    h1 {
-      color: #fff;
-      margin: 10px 0 0;
-      font-size: 40px;
-      font-weight: bold;
-    }
-    h2 {
-      color: #aaa;
-      margin: 0 0 20px;
-      font-size: 18px;
-    }
-    .main-container {
+      background-color: #222;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #eee;
       display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      display: flex;
+      flex: 1;
+      padding: 20px;
+      gap: 40px;
+      box-sizing: border-box;
     }
     .connection-panel {
-      background-color: #111;
-      padding: 15px;
-      border-radius: 10px;
+      width: 280px;
+      background-color: #333;
+      border-radius: 12px;
+      padding: 20px 25px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      min-width: 250px;
+      gap: 18px;
+      box-shadow: 0 0 15px rgba(255 255 255 / 0.1);
     }
-    .connection-panel input, .connection-panel button, select {
-      padding: 8px;
+    .connection-panel h2 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+      text-align: center;
+      color: #f0a500;
+      font-weight: 700;
+      user-select: none;
+    }
+    label {
+      font-weight: 600;
       font-size: 14px;
-      border-radius: 5px;
-      border: none;
+      margin-bottom: 6px;
+      user-select: none;
     }
-    .connection-panel button {
-      background-color: #27ae60;
-      color: white;
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+      box-sizing: border-box;
+      outline-offset: 2px;
+      outline-color: #f0a500;
+    }
+    button.connect-btn {
+      padding: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      background-color: #f0a500;
+      border: none;
+      border-radius: 8px;
+      color: #222;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    button.connect-btn:hover {
+      background-color: #d18e00;
+    }
+    .status {
+      text-align: center;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 8px;
+      border-radius: 6px;
+      user-select: none;
+    }
+    .status.connected {
+      color: #27ae60;
+    }
+    .status.disconnected {
+      color: #e74c3c;
+    }
+    .status.connecting {
+      color: #f39c12;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    h1 {
+      font-size: 48px;
+      font-weight: 900;
+      margin: 0;
+      color: #f0a500;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.85);
+      user-select: none;
+    }
+    h3 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 22px;
+      color: #ccc;
+      user-select: none;
     }
     .panel {
+      margin-top: 12px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(8, 90px);
+      grid-auto-rows: 70px;
+      gap: 14px 12px;
       background-color: #111;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 600px;
+      padding: 18px 18px 22px 18px;
+      border-radius: 14px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
+      user-select: none;
     }
     .button {
-      height: 60px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: bold;
-      color: #fff;
+      background-color: #444;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
       cursor: pointer;
-      position: relative;
+      transition: box-shadow 0.25s ease, transform 0.2s ease;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 5px;
-      transition: transform 0.2s;
+      user-select: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+    .button:hover {
+      box-shadow: 0 0 15px 2px rgba(255 255 255 / 0.7);
+      transform: scale(1.07);
+    }
+    .button.red {
+      background-color: #c0392b;
+    }
+    .button.green {
+      background-color: #27ae60;
+    }
+    .button.yellow {
+      background-color: #f39c12;
+    }
+    .button.blue {
+      background-color: #2980b9;
+    }
+    #saveConfigBtn {
+      margin-top: 20px;
+      padding: 14px 28px;
+      font-size: 18px;
+      font-weight: 700;
+      background-color: #3498db;
+      color: white;
       border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+      transition: background-color 0.3s ease;
+      align-self: center;
     }
-    .button:active {
-      transform: scale(0.95);
-      opacity: 0.8;
+    #saveConfigBtn:hover {
+      background-color: #1d6fa5;
     }
-    .scene { background-color: #2980b9; }
-    .transition { background-color: #8e44ad; }
-    .audio { background-color: #e67e22; }
-    .media { background-color: #c0392b; }
     .overlay {
       position: fixed;
       top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
+      width: 100vw; height: 100vh;
+      background-color: rgba(0,0,0,0.85);
       display: none;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      z-index: 2000;
     }
     .modal {
-      background: #333;
-      padding: 20px;
-      border-radius: 10px;
-      width: 300px;
+      background-color: #333;
+      padding: 28px 30px;
+      border-radius: 14px;
+      width: 320px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 14px;
+      user-select: none;
     }
-    #saveConfigBtn, #loadConfigBtn {
-      margin: 10px;
-      padding: 10px 20px;
-      background: #3498db;
+    .modal label {
+      font-weight: 700;
+      font-size: 15px;
+      color: #eee;
+    }
+    .modal input, .modal select {
+      padding: 10px 14px;
+      font-size: 17px;
+      border-radius: 8px;
+      border: none;
+      outline-offset: 2px;
+      outline-color: #f0a500;
+      background-color: #222;
+      color: #eee;
+    }
+    .modal button {
+      margin-top: 16px;
+      padding: 14px 0;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 12px;
+      border: none;
+      background-color: #27ae60;
       color: white;
-      border: none;
-      border-radius: 5px;
       cursor: pointer;
+      user-select: none;
+      transition: background-color 0.25s ease;
     }
-    .page-nav {
-      display: flex;
-      gap: 10px;
-      margin: 10px;
-    }
-    .page-nav button {
-      padding: 5px 10px;
-      background: #555;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+    .modal button:hover {
+      background-color: #1e8449;
     }
   </style>
 </head>
 <body>
-  <h1>ATEM MINI OBS</h1>
-  <h2>by Anderson Alves</h2>  <div class="main-container">
+  <div class="container">
     <div class="connection-panel">
-      <input type="text" id="host" placeholder="Host (ex: localhost)">
-      <input type="text" id="port" placeholder="Porta (ex: 4455)">
-      <input type="password" id="password" placeholder="Senha do WebSocket">
-      <button onclick="connectOBS()">Conectar</button>
-      <div id="connectionStatus" style="color: #fff;"></div>
-      <input type="file" accept="application/JSON" onchange="loadFromJSON(event)">
-      <button id="loadConfigBtn">Carregar Perfil</button>
-    </div><div class="panel" id="panel"></div>
+      <h2>Conexão OBS WebSocket</h2>
+      <label for="hostInput">Host</label>
+      <input type="text" id="hostInput" placeholder="ex: ws://127.0.0.1" value="ws://127.0.0.1" />
+      <label for="portInput">Porta</label>
+      <input type="number" id="portInput" placeholder="ex: 4444" value="4444" />
+      <label for="passwordInput">Senha</label>
+      <input type="password" id="passwordInput" placeholder="Senha do OBS WebSocket" />
+      <button class="connect-btn" id="connectBtn">Conectar ao OBS</button>
+      <div id="status" class="status disconnected">Desconectado</div>
+    </div>
 
-  </div>  <div class="page-nav">
-    <button onclick="prevPage()">Anterior</button>
-    <button onclick="nextPage()">Próxima</button>
-  </div><button id="saveConfigBtn" onclick="saveToJSON()">Salvar Configuração</button>
+    <div class="main-content">
+      <h1>ATEM MINI OBS</h1>
+      <h3>by Anderson Alves</h3>
+
+      <div class="panel" id="panel"></div>
+
+      <button id="saveConfigBtn" onclick="saveToJSON()">Salvar Configuração</button>
+    </div>
+  </div>
 
   <div class="overlay" id="configOverlay">
     <div class="modal">
-      <label for="buttonLabel">Nome:</label>
-      <input type="text" id="buttonLabel">
+      <label for="buttonLabel">Nome do botão:</label>
+      <input type="text" id="buttonLabel" />
       <label for="buttonAction">Ação:</label>
       <select id="buttonAction">
-        <option value="scene">Cena</option>
+        <option value="scene">Trocar cena</option>
         <option value="transition">Transição</option>
         <option value="audio">Áudio</option>
         <option value="media">Mídia</option>
       </select>
       <button onclick="saveConfig()">Salvar</button>
     </div>
-  </div>  <script>
-    let obsSocket = null;
-    let buttonConfigs = {};
-    let currentButton = null;
-    let currentPage = 0;
-    const buttonsPerPage = 12;
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.1/dist/obs-websocket.min.js"></script>
+  <script>
+    // Dados e variáveis globais
+    const buttonLabels = [
+      '1', '2', '3', '4', 'CAM 1', 'CAM 2', 'CAM 3', 'CAM 4',
+      'Cut', 'Auto', 'Fade', 'Dip', 'DVE', 'Wipe', 'Black', 'Still',
+      'Rec', 'Stop', 'Stream', 'On Air', 'Media 1', 'Media 2', 'FTB', 'Logo',
+      'Mic 1', 'Mic 2', 'Mic Off', 'Mic On', 'AFV', 'A1', 'A2', 'A3'
+    ];
+
     const panel = document.getElementById('panel');
+    const status = document.getElementById('status');
+    let currentButton = null;
+    const buttonConfigs = {};
 
-    function connectOBS() {
-      const host = document.getElementById('host').value || 'localhost';
-      const port = document.getElementById('port').value || '4455';
-      const password = document.getElementById('password').value || '';
-      const wsUrl = `ws://${host}:${port}`;
-
-      obsSocket = new WebSocket(wsUrl);
-      obsSocket.onopen = () => {
-        document.getElementById('connectionStatus').textContent = 'Conectado!';
-      };
-      obsSocket.onerror = () => {
-        document.getElementById('connectionStatus').textContent = 'Erro na conexão';
-      };
-      obsSocket.onclose = () => {
-        document.getElementById('connectionStatus').textContent = 'Desconectado';
-      };
-    }
-
-    function renderButtons() {
-      panel.innerHTML = '';
-      const keys = Object.keys(buttonConfigs).slice(currentPage * buttonsPerPage, (currentPage + 1) * buttonsPerPage);
-      keys.forEach(key => {
-        const config = buttonConfigs[key];
-        const btn = document.createElement('button');
-        btn.className = `button ${config.action}`;
-        btn.innerHTML = `<i class="fa ${getIcon(config.action)}"></i><span>${key}</span>`;
-        btn.onclick = () => handleAction(key, config);
-        btn.oncontextmenu = (e) => {
-          e.preventDefault();
-          currentButton = key;
-          openConfig(key);
-        };
-        panel.appendChild(btn);
+    // Criar os botões ATEM
+    buttonLabels.forEach(label => {
+      const btn = document.createElement('button');
+      btn.className = 'button';
+      if (/^\d$/.test(label)) btn.classList.add('red');
+      if (/CAM/.test(label)) btn.classList.add('blue');
+      if (/Cut|Auto/.test(label)) btn.classList.add('green');
+      if (/Fade|Dip|DVE|Wipe/.test(label)) btn.classList.add('yellow');
+      btn.textContent = label;
+      btn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        openConfig(btn);
       });
-    }
+      btn.addEventListener('click', () => handleButtonClick(label));
+      panel.appendChild(btn);
+      buttonConfigs[label] = { action: '' };
+    });
 
-    function getIcon(action) {
-      return {
-        scene: 'fa-tv',
-        transition: 'fa-arrows-turn-to-dots',
-        audio: 'fa-volume-high',
-        media: 'fa-photo-film'
-      }[action] || 'fa-circle';
-    }
-
-    function handleAction(label, config) {
-      if (!config || !config.action || obsSocket.readyState !== 1) return;
-      const msg = {
-        op: 6,
-        d: {
-          requestType: '',
-          requestId: Date.now().toString(),
-          requestData: {}
-        }
-      };
-      if (config.action === 'scene') {
-        msg.d.requestType = 'SetCurrentProgramScene';
-        msg.d.requestData.sceneName = label;
-      } else if (config.action === 'transition') {
-        msg.d.requestType = 'TriggerTransition';
-      } else if (config.action === 'audio') {
-        msg.d.requestType = 'ToggleInputMute';
-        msg.d.requestData.inputName = label;
-      } else if (config.action === 'media') {
-        msg.d.requestType = 'PlayPauseMedia';
-        msg.d.requestData.inputName = label;
-      }
-      obsSocket.send(JSON.stringify(msg));
-    }
-
-    function openConfig(label) {
-      document.getElementById('buttonLabel').value = label;
-      document.getElementById('buttonAction').value = buttonConfigs[label].action;
+    function openConfig(button) {
+      currentButton = button;
+      document.getElementById('buttonLabel').value = button.textContent;
+      document.getElementById('buttonAction').value = buttonConfigs[button.textContent]?.action || 'scene';
       document.getElementById('configOverlay').style.display = 'flex';
     }
 
     function saveConfig() {
-      const label = document.getElementById('buttonLabel').value;
+      if (!currentButton) return;
+      const label = document.getElementById('buttonLabel').value.trim();
       const action = document.getElementById('buttonAction').value;
+      if (label.length === 0) return alert('Nome do botão não pode ficar vazio!');
+      currentButton.textContent = label;
       buttonConfigs[label] = { action };
       document.getElementById('configOverlay').style.display = 'none';
-      renderButtons();
     }
 
     function saveToJSON() {
-      const blob = new Blob([JSON.stringify(buttonConfigs, null, 2)], { type: 'application/json' });
+      const config = {};
+      for (const label in buttonConfigs) {
+        config[label] = buttonConfigs[label];
+      }
+      const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'config.json';
+      a.href = url;
+      a.download = 'config-atem.json';
       a.click();
+      URL.revokeObjectURL(url);
     }
 
-    function loadFromJSON(event) {
-      const file = event.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        buttonConfigs = JSON.parse(reader.result);
-        renderButtons();
-      };
-      reader.readAsText(file);
+    // OBS WebSocket integration
+    const obsConnection = new OBSWebSocket();
+
+    const hostInput = document.getElementById('hostInput');
+    const portInput = document.getElementById('portInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const connectBtn = document.getElementById('connectBtn');
+
+    let isConnected = false;
+
+    connectBtn.addEventListener('click', async () => {
+  if (!isConnected) {
+    const host = hostInput.value.trim();
+    const port = portInput.value.trim();
+    const password = passwordInput.value;
+    
+    if (!host || !port) {
+      alert('Informe host e porta para conexão.');
+      return;
     }
 
-    function prevPage() {
-      if (currentPage > 0) {
-        currentPage--;
-        renderButtons();
+    const url = `${host.startsWith('ws://') ? host : 'ws://' + host}:${port}`;
+
+    status.textContent = 'Conectando...';
+    status.className = 'status connecting';
+
+    try {
+      await obsConnection.connect(url, password);
+      isConnected = true;
+      status.textContent = 'Conectado';
+      status.className = 'status connected';
+      connectBtn.textContent = 'Desconectar do OBS';
+
+      obsConnection.on('ConnectionClosed', () => {
+        isConnected = false;
+        status.textContent = 'Desconectado';
+        status.className = 'status disconnected';
+        connectBtn.textContent = 'Conectar ao OBS';
+      });
+
+    } catch (error) {
+      status.textContent = 'Erro ao conectar: ' + error.message;
+      status.className = 'status disconnected';
+      console.error('Erro na conexão OBS:', error);
+    }
+  } else {
+    await obsConnection.disconnect();
+    isConnected = false;
+    status.textContent = 'Desconectado';
+    status.className = 'status disconnected';
+    connectBtn.textContent = 'Conectar ao OBS';
+  }
+});
+
+
+    async function handleButtonClick(label) {
+      if (!isConnected) {
+        alert('Conecte-se ao OBS antes de usar os botões.');
+        return;
+      }
+
+      // Exemplo básico: comandos simples dependendo do label
+      try {
+        if (label === 'Cut') {
+          await obsConnection.call('TransitionToProgram', { transitionName: 'Cut' });
+        } else if (label === 'Auto') {
+          await obsConnection.call('TransitionToProgram', { transitionName: 'Fade' });
+        } else if (/^\d+$/.test(label)) {
+          // Trocar cena para uma cena com nome igual ao número, por exemplo
+          await obsConnection.call('SetCurrentProgramScene', { sceneName: label });
+        } else {
+          alert(`Botão "${label}" clicado - ação personalizada não implementada.`);
+        }
+      } catch (err) {
+        console.error('Erro ao enviar comando para OBS:', err);
       }
     }
-
-    function nextPage() {
-      const maxPage = Math.floor(Object.keys(buttonConfigs).length / buttonsPerPage);
-      if (currentPage < maxPage) {
-        currentPage++;
-        renderButtons();
-      }
-    }
-  </script></body>
+  </script>
+</body>
 </html>
