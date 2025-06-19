@@ -385,9 +385,36 @@
 
 
     async function handleButtonClick(label) {
-      if (!isConnected) {
-        alert('Conecte-se ao OBS antes de usar os botões.');
-        return;
+  if (!isConnected) {
+    alert('Conecte-se ao OBS antes de usar os botões.');
+    return;
+  }
+  const config = buttonConfigs[label];
+  try {
+    if (config && config.action) {
+      switch(config.action) {
+        case 'scene':
+          await obsConnection.call('SetCurrentProgramScene', { sceneName: label });
+          break;
+        case 'transition':
+          await obsConnection.call('TransitionToProgram', { transitionName: 'Fade' });
+          break;
+        case 'audio':
+          alert('Ação de áudio ainda não implementada.');
+          break;
+        case 'media':
+          alert('Ação de mídia ainda não implementada.');
+          break;
+        default:
+          alert(`Ação personalizada "${config.action}" ainda não implementada.`);
+      }
+    } else {
+      alert(`Botão "${label}" clicado - ação personalizada não implementada.`);
+    }
+  } catch (err) {
+    console.error('Erro ao enviar comando para OBS:', err);
+  }
+}
       }
 
       // Exemplo básico: comandos simples dependendo do label
